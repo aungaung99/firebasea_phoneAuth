@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mytest_app/auth/profile.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 import '../model/response-model.dart';
-import '../services/api_services.dart';
 import '../utils.dart';
 
 class VerifyCodePage extends StatefulWidget {
@@ -18,7 +18,7 @@ class VerifyCodePage extends StatefulWidget {
 
 class _VerifyCodePageState extends State<VerifyCodePage> {
   String _vId = "-";
-  final APIService _apiservice = APIService();
+
   final TextEditingController _verifyCodeController = TextEditingController();
   // PIN CODE START
   StreamController<ErrorAnimationType>? errorController;
@@ -26,18 +26,11 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   String currentText = "";
   final formKey = GlobalKey<FormState>();
   // PIN CODE END
-  ResponseModel responseModel = ResponseModel();
   bool _isLoading = false;
 
   void _startLoading() async {
     setState(() {
       _isLoading = true;
-    });
-
-    await Future.delayed(const Duration(seconds: 3));
-
-    setState(() {
-      _isLoading = false;
     });
   }
 
@@ -151,20 +144,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
               width: MediaQuery.of(context).size.width - 40, // <-- Your width
               height: 50,
               child: FilledButton(
-                onPressed: () async {
-                  FirebaseAuth auth = FirebaseAuth.instance;
-
-                  // Create a PhoneAuthCredential with the code
-                  PhoneAuthCredential credential = PhoneAuthProvider.credential(
-                      verificationId: _vId,
-                      smsCode: _verifyCodeController.text);
-
-                  // Sign the user in (or link) with the credential
-                  await auth
-                      .signInWithCredential(credential)
-                      // ignore: avoid_print
-                      .then((value) => {print(value)});
-                },
+                onPressed: () => verifyCredential(),
                 // login(_phoneController.text, "Efficient@soft#1982"),
                 style: ButtonStyle(
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -200,6 +180,28 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
         ),
       ),
     );
+  }
+
+  Future<void> verifyCredential() async {
+    FirebaseAuth auth = FirebaseAuth.instance;
+
+    // Create a PhoneAuthCredential with the code
+    PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _vId, smsCode: _verifyCodeController.text);
+
+    // Sign the user in (or link) with the credential
+    return await auth
+        .signInWithCredential(credential)
+        // ignore: avoid_print
+        .then((value) => {
+              // ignore: avoid_print
+              print(value),
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          ProfilePage(phoneNumber: widget.phoneNumber)))
+            });
   }
 
   Future<void> phoneVerfiy(String phoneNumber) async {
@@ -241,26 +243,5 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
         print("Catch : $e");
       }
     }
-  }
-
-  Future<void> login(String username, String password) async {
-    _startLoading();
-    return await _apiservice.token('auth/access-token', body: {
-      "username": username,
-      "password": password,
-    }).then((ResponseModel res) async {
-      responseModel = res;
-      final snackBar = SnackBar(
-        content: responseModel.success
-            ? Text(responseModel.meta["message"])
-            : Text(responseModel.error["message"]),
-        backgroundColor: Colors.lightGreen,
-        behavior: SnackBarBehavior.floating,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      setState(() {
-        _isLoading = false;
-      });
-    });
   }
 }

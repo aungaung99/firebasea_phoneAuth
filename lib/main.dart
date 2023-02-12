@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mytest_app/auth/login.dart';
 
+import 'auth/profile.dart';
 import 'firebase_options.dart';
 
 void main() async {

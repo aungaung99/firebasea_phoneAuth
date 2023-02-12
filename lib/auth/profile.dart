@@ -84,6 +84,10 @@ class _ProfilePageState extends State<ProfilePage> {
           email = responseModel.data["user"]["email"];
           role = responseModel.data["user"]["user_role"];
         });
+      } else {
+        fullName = "User not found";
+        email = "-";
+        role = "-";
       }
 
       final snackBar = SnackBar(

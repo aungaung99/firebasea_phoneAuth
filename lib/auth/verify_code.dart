@@ -1,24 +1,23 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
 import '../model/response-model.dart';
 import '../services/api_services.dart';
+import '../utils.dart';
 
 class VerifyCodePage extends StatefulWidget {
-  const VerifyCodePage(
-      {Key? key, this.verificationId, required this.phoneNumber})
-      : super(key: key);
-  final String? verificationId;
+  const VerifyCodePage({Key? key, required this.phoneNumber}) : super(key: key);
   final String phoneNumber;
   @override
   State<VerifyCodePage> createState() => _VerifyCodePageState();
 }
 
 class _VerifyCodePageState extends State<VerifyCodePage> {
-  String VID = "-";
+  String _vId = "-";
   final APIService _apiservice = APIService();
   final TextEditingController _verifyCodeController = TextEditingController();
   // PIN CODE START
@@ -45,8 +44,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   @override
   void initState() {
     errorController = StreamController<ErrorAnimationType>();
-    print("VID: ${widget.verificationId}");
-    VID = widget.verificationId ?? "-";
+    phoneVerfiy(widget.phoneNumber);
     super.initState();
   }
 
@@ -59,7 +57,6 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
 
   @override
   Widget build(BuildContext context) {
-    String? value = widget.phoneNumber;
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -159,11 +156,13 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
 
                   // Create a PhoneAuthCredential with the code
                   PhoneAuthCredential credential = PhoneAuthProvider.credential(
-                      verificationId: VID, smsCode: _verifyCodeController.text);
+                      verificationId: _vId,
+                      smsCode: _verifyCodeController.text);
 
                   // Sign the user in (or link) with the credential
                   await auth
                       .signInWithCredential(credential)
+                      // ignore: avoid_print
                       .then((value) => {print(value)});
                 },
                 // login(_phoneController.text, "Efficient@soft#1982"),
@@ -201,6 +200,47 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
         ),
       ),
     );
+  }
+
+  Future<void> phoneVerfiy(String phoneNumber) async {
+    if (phoneNumber.isEmpty) {
+      toastMessage(
+          context, "warning", "Invalid Input!", "Please type phone number");
+      return;
+    }
+    if (phoneNumber.startsWith('09')) {
+      phoneNumber = phoneNumber.substring(1, phoneNumber.length);
+    }
+    try {
+      _startLoading();
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: '+95$phoneNumber',
+        verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationFailed: (FirebaseAuthException e) {},
+        codeSent: (String verificationId, int? resendToken) {
+          if (kDebugMode) {
+            print(verificationId);
+          }
+          if (kDebugMode) {
+            print(resendToken);
+          }
+          setState(() {
+            _isLoading = false;
+            _vId = verificationId;
+          });
+        },
+        timeout: const Duration(seconds: 60),
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print("Auth Exception $e.code");
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Catch : $e");
+      }
+    }
   }
 
   Future<void> login(String username, String password) async {

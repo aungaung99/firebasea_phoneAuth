@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mytest_app/auth/verify_code.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
-
 import '../utils.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,20 +12,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _phoneController = TextEditingController();
-  bool _isLoading = false;
-
-  // This function will be triggered when the button is pressed
-  void _startLoading() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    await Future.delayed(const Duration(seconds: 3));
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
 
   @override
   void setState(VoidCallback fn) async {
@@ -90,29 +74,9 @@ class _LoginPageState extends State<LoginPage> {
                         RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),
                 ))),
-                child: _isLoading
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          SizedBox(
-                            height: 15,
-                            width: 15,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 8,
-                          ),
-                          Text('Loading..',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold))
-                        ],
-                      )
-                    : const Text('Login',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text('Login',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -130,36 +94,11 @@ class _LoginPageState extends State<LoginPage> {
     if (phoneNumber.startsWith('09')) {
       phoneNumber = phoneNumber.substring(1, phoneNumber.length);
     }
-    try {
-      _startLoading();
-      FirebaseAuth auth = FirebaseAuth.instance;
-      await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: '+95$phoneNumber',
-        verificationCompleted: (PhoneAuthCredential credential) {},
-        verificationFailed: (FirebaseAuthException e) {},
-        codeSent: (String verificationId, int? resendToken) {
-          print(verificationId);
-          print(resendToken);
-          setState(() {
-            _isLoading = false;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => VerifyCodePage(
-                      verificationId: verificationId,
-                      phoneNumber: phoneNumber)),
-            );
-          });
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          print('Auto Retrieval: $verificationId');
-        },
 
-      );
-    } on FirebaseAuthException catch (e) {
-      print("Auth Exception $e.code");
-    } catch (e) {
-      print("Catch : $e");
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => VerifyCodePage(phoneNumber: phoneNumber)),
+    );
   }
 }

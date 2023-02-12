@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -42,10 +43,12 @@ class APIService {
       },
     ).then((http.Response response) {
       final String res = response.body;
-      final int statusCode = response.statusCode;
       return res;
+    // ignore: body_might_complete_normally_catch_error
     }).catchError((e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
     });
   }
 
@@ -59,9 +62,6 @@ class APIService {
               },
               body: body)
           .then((http.Response response) {
-        if (response == null) {
-          print("Response is Null Value");
-        }
         final int statusCode = response.statusCode;
         return statusCode;
       });

@@ -81,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (res.success == true) {
         setState(() {
           fullName = responseModel.data["user"]["fullName"];
-          email = responseModel.data["user"]["email"];
+          email = responseModel.data["user"]["email"]??"-";
           role = responseModel.data["user"]["user_role"];
         });
       } else {
